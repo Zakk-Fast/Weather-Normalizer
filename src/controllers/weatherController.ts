@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { getWeather } from '../services/weatherService';
+import { InvalidProviderError } from '../providers/providerFactory';
 
 export async function getWeatherHandler(req: Request, res: Response): Promise<void> {
   const { lat, lon, provider } = req.query;
@@ -20,8 +21,12 @@ export async function getWeatherHandler(req: Request, res: Response): Promise<vo
     });
     res.status(200).json(result);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Internal server error';
     console.error('[weatherController]', err);
+    if (err instanceof InvalidProviderError) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    const message = err instanceof Error ? err.message : 'Internal server error';
     res.status(500).json({ error: message });
   }
 }

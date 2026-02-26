@@ -10,7 +10,20 @@ export const openMeteoProvider: WeatherProvider = {
     url.searchParams.set('temperature_unit', 'fahrenheit');
     url.searchParams.set('wind_speed_unit', 'mph');
 
-    const response = await fetch(url.toString());
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    let response: Response;
+    try {
+      response = await fetch(url.toString(), { signal: controller.signal });
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        throw new Error('Open-Meteo request timed out');
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
       throw new Error(`Open-Meteo request failed: ${response.status} ${response.statusText}`);
