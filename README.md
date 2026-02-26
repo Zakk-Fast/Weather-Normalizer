@@ -164,7 +164,7 @@ I intentionally avoided over‑engineering. The solution focuses on:
 
 ## AI Collaboration
 
-See **AI_USAGE_REFLECTION.md** for a detailed explanation of how AI was used as an engineering accelerator while architectural ownership, decision‑making, and validation remained human‑driven.
+See [AI_USAGE_REFLECTION.md](https://github.com/Zakk-Fast/Weather-Normalizer/blob/main/AI_USAGE_REFLECTION.md) for a detailed explanation of how AI was used as an engineering accelerator while architectural ownership, decision‑making, and validation remained human‑driven.
 
 ---
 
