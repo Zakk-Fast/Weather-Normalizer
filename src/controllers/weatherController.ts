@@ -19,7 +19,9 @@ export async function getWeatherHandler(req: Request, res: Response): Promise<vo
       provider: typeof provider === 'string' ? provider : undefined,
     });
     res.status(200).json(result);
-  } catch {
-    res.status(500).json({ error: 'Internal server error' });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    console.error('[weatherController]', err);
+    res.status(500).json({ error: message });
   }
 }

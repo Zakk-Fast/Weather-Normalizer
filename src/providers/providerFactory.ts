@@ -1,10 +1,19 @@
 import { WeatherProvider } from './types';
+import { openMeteoProvider } from './implementations/openMeteoProvider';
 
-// TODO: Implement provider selection logic.
-// Accepts an optional provider name string and returns the matching WeatherProvider.
-// Falls back to a default provider when no name is given.
-// Throws if an unknown provider name is requested.
+// TODO: Register additional providers here as they are implemented.
+
+const providers: Record<string, WeatherProvider> = {
+  'open-meteo': openMeteoProvider,
+};
+
+const DEFAULT_PROVIDER = 'open-meteo';
 
 export function getProvider(providerName?: string): WeatherProvider {
-  throw new Error('TODO: implement provider factory');
+  const key = providerName ?? DEFAULT_PROVIDER;
+  const provider = providers[key];
+  if (!provider) {
+    throw new Error(`Unknown provider: "${key}"`);
+  }
+  return provider;
 }
