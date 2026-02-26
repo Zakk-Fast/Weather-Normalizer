@@ -1,10 +1,10 @@
 import { WeatherProvider } from './types';
 import { openMeteoProvider } from './implementations/openMeteoProvider';
-
-// TODO: Register additional providers here as they are implemented.
+import { mockProvider } from './implementations/mockProvider';
 
 const providers: Record<string, WeatherProvider> = {
   'open-meteo': openMeteoProvider,
+  'mock': mockProvider,
 };
 
 const DEFAULT_PROVIDER = 'open-meteo';
