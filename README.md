@@ -1,204 +1,179 @@
-# API Normalization Service
+# Weather API Normalization Service
 
-A RESTful API service that consumes external data providers, normalizes inconsistent upstream responses into a unified internal contract, and returns a predictable response regardless of source implementation.
+## Overview
+
+This project implements a RESTful API normalization service designed around one core idea:
+
+> The application should never depend directly on an external API’s data shape.
+
+Instead, upstream APIs are isolated behind a normalization layer so they can be replaced with minimal impact to the rest of the system.
+
+This challenge focused on **architecture, judgment, and AI collaboration**, not just data fetching.
 
 ---
 
-## Architecture Overview
+## Architecture
 
-![Architecture Diagram](./architecture.png)
+Request flow:
 
-The system is organized into clearly separated layers to ensure maintainability, extensibility, and provider swapability.
+![Flow](./architecture.png)
 
-### Layers
+### Controller
+- Validates query parameters
+- Handles HTTP concerns
+- Maps errors to proper status codes
+- Supports response filtering via `fields` query parameter
 
-**Controller**
-- Handles HTTP requests
-- Validates incoming input
-- Sends normalized response
+### Service
+- Owns business logic
+- Selects provider via factory
+- Computes derived fields (`isFreezing`)
+- Remains independent of external APIs
 
-**Service**
-- Contains core business logic
-- Orchestrates workflow
-- Computes derived fields
-- Remains independent of upstream APIs
+### Provider
+- Responsible for communicating with external systems
+- Formats outgoing requests
+- Returns raw upstream data
 
-**Provider**
-- Fetches data from external APIs or local sources
-- Translates internal requests into provider-specific formats
-- Selected dynamically via Provider Factory
-
-**Normalizer**
-- Converts raw provider data into the internal normalized contract
-- Renames fields
-- Flattens structures
-- Converts units
+### Normalizer
+- Converts raw API data into a stable internal contract
+- Shields the application from upstream schema changes
 
 ---
 
 ## Normalized Response Contract
 
-The purpose of this service is to guarantee a consistent output format regardless of the upstream data source.
+All providers produce:
 
-### Endpoint
-
-GET /weather
-
-### Query Parameters
-
-| Parameter | Type | Required | Description |
-|----------|------|----------|-------------|
-| lat | number | ✓ | Latitude |
-| lon | number | ✓ | Longitude |
-| provider | string | optional | Data source override |
-
-### Response Shape
-
-```json
 {
-  "location": "string",
-  "temperature": number,
-  "windSpeed": number,
-  "condition": "string",
-  "isFreezing": boolean
+  location: string,
+  temperature: number,
+  windSpeed: number,
+  condition: string,
+  isFreezing: boolean
 }
-```
 
-### Contract Guarantees
-
-- Response structure remains stable regardless of upstream API.
-- Provider changes require no modification to Controller or Service logic.
-- All external inconsistencies are handled within the Provider + Normalizer layers.
+The rest of the system depends only on this contract.
 
 ---
 
-## Provider Swapability
+## Supported Providers
 
-The application supports multiple upstream providers through a Provider Factory abstraction.
+### Open-Meteo (Default)
+Real external weather API integration.
 
-Adding a new provider requires:
+### Mock Provider
+Local provider used to demonstrate swapability and deterministic testing.
 
-1. Creating a new provider implementation.
-2. Adding selection logic to the Provider Factory.
-3. (If needed) Adding a matching normalizer.
+Examples:
 
-No changes are required in:
-- Controller
-- Service
-- API contract
+http://localhost:3000/weather?lat=30&lon=-97
+http://localhost:3000/weather?lat=30&lon=-97&provider=mock
 
----
-
-## Project Structure
-
-```
-src/
-│
-├── controllers/
-├── services/
-├── providers/
-│   ├── providerFactory.ts
-│   └── implementations/
-├── normalizers/
-├── routes/
-├── types/
-└── utils/
-```
+No business logic changes required when switching providers.
 
 ---
 
-## Setup Instructions
+## Filtering
 
-> *To be completed*
+Supports projection filtering:
 
-```
+http://localhost:3000/weather?lat=30&lon=-97&fields=temperature,condition
+
+Returns only requested fields while preserving normalization guarantees.
+
+---
+
+## Derived Field
+
+`isFreezing` is computed within the Service layer rather than supplied by the upstream API, demonstrating separation between external data and internal business logic.
+
+---
+
+## Resilience
+
+The service includes:
+
+- Request validation
+- Provider selection validation (400 for invalid providers)
+- API timeout handling
+- Normalizer shape validation
+- Consistent error responses
+
+---
+
+## Design for Swap‑ability
+
+If the upstream API changes:
+
+### Files that WOULD change
+- `/providers/implementations/*`
+- `/normalizers/*`
+
+### Files that WOULD NOT change
+- Controllers
+- Services
+- Routes
+- Response contract
+- Tests
+
+This keeps business logic stable while allowing rapid provider replacement.
+
+---
+
+## Setup
+
+Install dependencies:
+
 npm install
+
+Run development server:
+
 npm run dev
-```
 
----
+Run tests:
 
-## API Usage
-
-> *To be completed*
-
-Example request:
-
-GET /weather?lat=30.26&lon=-97.74
-
----
-
-## Error Handling & Resilience
-
-> *To be completed*
-
-Planned considerations:
-
-- Upstream API failures
-- Timeouts
-- Invalid responses
-- Input validation errors
+npm test
 
 ---
 
 ## Testing
 
-> *To be completed*
+Integration-style tests using Vitest + Supertest validate:
+
+- Request validation
+- Provider switching
+- Filtering behavior
+- Error handling
+- Normalized contract stability
+
+Tests intentionally use the mock provider to avoid external network dependency.
 
 ---
 
-## Design Decisions
+## Architectural Notes
 
-> *To be completed*
+I intentionally avoided over‑engineering. The solution focuses on:
 
-Topics to discuss:
-- Why layered architecture was chosen
-- Provider abstraction strategy
-- Normalization boundary placement
-- Tradeoffs considered
-
----
-
-## AI Usage & Development Process
-
-This project intentionally incorporates AI-assisted development as part of the engineering workflow.
-
-### Goals for AI Usage
-- Accelerate boilerplate generation
-- Support iterative refinement
-- Maintain developer ownership of decisions
-
-### How AI Was Used
-
-> *(Fill in during development — keep notes as you work)*
-
-Examples to include later:
-
-- Initial architecture exploration
-- Generating project scaffolding
-- Iterating on provider abstraction
-- Debugging and refinement
-- Code review assistance
-
-### Example Prompt Log
-
-```
-Prompt:
-"Generate TypeScript interfaces for a provider abstraction layer."
-
-Reason:
-Define a consistent provider contract across implementations.
-
-Outcome:
-Used generated interfaces as baseline and refined manually.
-```
-
-### Philosophy
-
-AI was used as a collaborative engineering tool rather than an autonomous code generator. All architectural decisions, design direction, and final validation were performed manually.
+- Clear separation of concerns
+- Small, understandable abstractions
+- Demonstrating extensibility without unnecessary complexity
+- Shipping a complete, stable solution within the timebox
 
 ---
 
-## Author
+## AI Collaboration
 
-Zachary Fast
+See **AI_USAGE_REFLECTION.md** for a detailed explanation of how AI was used as an engineering accelerator while architectural ownership, decision‑making, and validation remained human‑driven.
+
+---
+
+## Final Thoughts
+
+The goal of this project was to demonstrate engineering judgment:
+
+- choosing appropriate abstractions
+- designing for change
+- leveraging AI effectively without outsourcing thinking
+
+The structure, architecture, and implementation direction were owned end‑to‑end, while AI was intentionally used to accelerate execution under clear constraints.
