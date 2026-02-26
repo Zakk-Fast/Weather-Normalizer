@@ -1,14 +1,25 @@
 import { Request, Response } from 'express';
-
-// TODO: Implement the weather controller.
-// Responsibilities:
-//   - Parse and validate query parameters (lat, lon, provider).
-//   - Return 400 if lat or lon are missing or not valid numbers.
-//   - Call the weather service with a typed WeatherRequest.
-//   - Send the WeatherResponse as JSON with status 200.
-//   - Handle errors from the service and return appropriate HTTP status codes.
-// This layer must contain NO business logic.
+import { getWeather } from '../services/weatherService';
 
 export async function getWeatherHandler(req: Request, res: Response): Promise<void> {
-  throw new Error('TODO: implement weather controller');
+  const { lat, lon, provider } = req.query;
+
+  const latNum = Number(lat);
+  const lonNum = Number(lon);
+
+  if (!lat || !lon || isNaN(latNum) || isNaN(lonNum)) {
+    res.status(400).json({ error: 'lat and lon are required' });
+    return;
+  }
+
+  try {
+    const result = await getWeather({
+      lat: latNum,
+      lon: lonNum,
+      provider: typeof provider === 'string' ? provider : undefined,
+    });
+    res.status(200).json(result);
+  } catch {
+    res.status(500).json({ error: 'Internal server error' });
+  }
 }
